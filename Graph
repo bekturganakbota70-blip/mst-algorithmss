@@ -1,0 +1,68 @@
+package ass3;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class Graph {
+    private Map<String, List<Edge>> adjacencyList;
+    private List<Edge> edges;
+    private Set<String> vertices;
+
+    public Graph() {
+        this.adjacencyList = new HashMap<>();
+        this.edges = new ArrayList<>();
+        this.vertices = new HashSet<>();
+    }
+
+    public void addVertex(String vertex) {
+        if (!adjacencyList.containsKey(vertex)) {
+            adjacencyList.put(vertex, new ArrayList<>());
+            vertices.add(vertex);
+        }
+    }
+    
+    public void addEdge(String from, String to, int weight) {
+        addVertex(from);
+        addVertex(to);
+
+        Edge edge = new Edge(from, to, weight);
+        adjacencyList.get(from).add(edge);
+        adjacencyList.get(to).add(edge);
+        edges.add(edge);
+    }
+    
+    public Set<String> getVertices() { return new HashSet<>(vertices); }
+    public List<Edge> getEdges() { return new ArrayList<>(edges); }
+    public List<Edge> getAdjacentEdges(String vertex) {
+        return new ArrayList<>(adjacencyList.getOrDefault(vertex, new ArrayList<>()));
+    }
+    public int getVertexCount() { return vertices.size(); }
+    public int getEdgeCount() { return edges.size(); }
+    
+    
+    public List<Edge> getSortedEdges() {
+        return edges.stream()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+
+    public static Graph fromJsonData(List<String> nodes, List<Map<String, Object>> edgesData) {
+        Graph graph = new Graph();
+
+        
+        for (String node : nodes) {
+            graph.addVertex(node);
+        }
+
+  
+        for (Map<String, Object> edgeData : edgesData) {
+            String from = (String) edgeData.get("from");
+            String to = (String) edgeData.get("to");
+            int weight = ((Number) edgeData.get("weight")).intValue();
+            graph.addEdge(from, to, weight);
+        }
+
+        return graph;
+    }
+}
