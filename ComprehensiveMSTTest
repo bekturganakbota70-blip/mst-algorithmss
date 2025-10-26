@@ -1,0 +1,131 @@
+package ass3;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.*;
+
+public class ComprehensiveMSTTest {
+    private Graph smallGraph;
+    private Graph mediumGraph;
+    private Graph largeGraph;
+
+    @BeforeEach
+    public void setUp() {
+     
+        smallGraph = new Graph();
+        smallGraph.addEdge("A", "B", 2);
+        smallGraph.addEdge("A", "C", 3);
+        smallGraph.addEdge("B", "C", 1);
+        smallGraph.addEdge("B", "D", 4);
+        smallGraph.addEdge("C", "D", 5);
+
+       
+        mediumGraph = createMediumGraph();
+
+        
+        largeGraph = createLargeGraph();
+    }
+
+    private Graph createMediumGraph() {
+        Graph graph = new Graph();
+        Random random = new Random(42); // Фиксированный seed для воспроизводимости
+
+        for (int i = 0; i < 12; i++) {
+            for (int j = i + 1; j < 12; j++) {
+                if (random.nextDouble() < 0.3) { // 30% плотность
+                    graph.addEdge("N" + i, "N" + j, random.nextInt(20) + 1);
+                }
+            }
+        }
+        return graph;
+    }
+
+    private Graph createLargeGraph() {
+        Graph graph = new Graph();
+        Random random = new Random(42);
+
+        for (int i = 0; i < 25; i++) {
+            for (int j = i + 1; j < 25; j++) {
+                if (random.nextDouble() < 0.2) { // 20% плотность
+                    graph.addEdge("L" + i, "L" + j, random.nextInt(50) + 1);
+                }
+            }
+        }
+        return graph;
+    }
+
+    @Test
+    @DisplayName("Test MST properties for small graph")
+    public void testSmallGraphMSTProperties() {
+        testMSTProperties(smallGraph);
+    }
+
+    @Test
+    @DisplayName("Test MST properties for medium graph")
+    public void testMediumGraphMSTProperties() {
+        testMSTProperties(mediumGraph);
+    }
+
+    @Test
+    @DisplayName("Test MST properties for large graph")
+    public void testLargeGraphMSTProperties() {
+        testMSTProperties(largeGraph);
+    }
+
+    private void testMSTProperties(Graph graph) {
+        PrimMST prim = new PrimMST();
+        KruskalMST kruskal = new KruskalMST();
+
+        MSTResult primResult = prim.findMST(graph);
+        MSTResult kruskalResult = kruskal.findMST(graph);
+
+       
+        assertEquals(primResult.getTotalCost(), kruskalResult.getTotalCost(),
+                "Prim and Kruskal should have same MST cost");
+
+        
+        assertEquals(graph.getVertexCount() - 1, primResult.getMstEdges().size(),
+                "Prim MST should have V-1 edges");
+        assertEquals(graph.getVertexCount() - 1, kruskalResult.getMstEdges().size(),
+                "Kruskal MST should have V-1 edges");
+
+   
+        assertTrue(primResult.getExecutionTimeMs() >= 0,
+                "Prim execution time should be non-negative");
+        assertTrue(kruskalResult.getExecutionTimeMs() >= 0,
+                "Kruskal execution time should be non-negative");
+
+  
+        assertTrue(primResult.getOperationsCount() >= 0,
+                "Prim operations count should be non-negative");
+        assertTrue(kruskalResult.getOperationsCount() >= 0,
+                "Kruskal operations count should be non-negative");
+    }
+
+    @Test
+    @DisplayName("Test performance comparison")
+    public void testPerformanceComparison() {
+        PrimMST prim = new PrimMST();
+        KruskalMST kruskal = new KruskalMST();
+
+        MSTResult primResult = prim.findMST(largeGraph);
+        MSTResult kruskalResult = kruskal.findMST(largeGraph);
+
+        System.out.println("Large Graph Performance:");
+        System.out.printf("Prim: %.3f ms, %d operations%n",
+                primResult.getExecutionTimeMs(), primResult.getOperationsCount());
+        System.out.printf("Kruskal: %.3f ms, %d operations%n",
+                kruskalResult.getExecutionTimeMs(), kruskalResult.getOperationsCount());
+
+        
+        MSTResult primResult2 = prim.findMST(largeGraph);
+        MSTResult kruskalResult2 = kruskal.findMST(largeGraph);
+
+        assertEquals(primResult.getTotalCost(), primResult2.getTotalCost(),
+                "Prim results should be reproducible");
+        assertEquals(kruskalResult.getTotalCost(), kruskalResult2.getTotalCost(),
+                "Kruskal results should be reproducible");
+    }
+}
