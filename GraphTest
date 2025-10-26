@@ -1,0 +1,159 @@
+package ass3;
+
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.*;
+
+public class GraphTest {
+
+    @Test
+    public void testGraphCreation() {
+        Graph graph = new Graph();
+        graph.addEdge("A", "B", 5);
+
+        assertEquals(2, graph.getVertexCount());
+        assertEquals(1, graph.getEdgeCount());
+        assertTrue(graph.getVertices().contains("A"));
+        assertTrue(graph.getVertices().contains("B"));
+    }
+
+    @Test
+    public void testPrimMST() {
+        Graph graph = new Graph();
+        graph.addEdge("A", "B", 4);
+        graph.addEdge("A", "C", 3);
+        graph.addEdge("B", "C", 2);
+        graph.addEdge("B", "D", 5);
+        graph.addEdge("C", "D", 7);
+        graph.addEdge("C", "E", 8);
+        graph.addEdge("D", "E", 6);
+
+        PrimMST prim = new PrimMST();
+        MSTResult result = prim.findMST(graph);
+
+        assertEquals(4, result.getMstEdges().size()); // V-1 edges
+        assertEquals(16, result.getTotalCost());
+        assertTrue(result.getExecutionTimeMs() >= 0);
+    }
+
+    @Test
+    public void testKruskalMST() {
+        Graph graph = new Graph();
+        graph.addEdge("A", "B", 4);
+        graph.addEdge("A", "C", 3);
+        graph.addEdge("B", "C", 2);
+        graph.addEdge("B", "D", 5);
+        graph.addEdge("C", "D", 7);
+        graph.addEdge("C", "E", 8);
+        graph.addEdge("D", "E", 6);
+
+        KruskalMST kruskal = new KruskalMST();
+        MSTResult result = kruskal.findMST(graph);
+
+        assertEquals(4, result.getMstEdges().size()); // V-1 edges
+        assertEquals(16, result.getTotalCost());
+        assertTrue(result.getExecutionTimeMs() >= 0);
+    }
+
+    @Test
+    public void testPrimKruskalSameCost() {
+        Graph graph = new Graph();
+        graph.addEdge("A", "B", 1);
+        graph.addEdge("A", "C", 4);
+        graph.addEdge("B", "C", 2);
+        graph.addEdge("C", "D", 3);
+        graph.addEdge("B", "D", 5);
+
+        PrimMST prim = new PrimMST();
+        KruskalMST kruskal = new KruskalMST();
+
+        MSTResult primResult = prim.findMST(graph);
+        MSTResult kruskalResult = kruskal.findMST(graph);
+
+        
+        assertEquals(primResult.getTotalCost(), kruskalResult.getTotalCost());
+
+        assertEquals(graph.getVertexCount() - 1, primResult.getMstEdges().size());
+        assertEquals(graph.getVertexCount() - 1, kruskalResult.getMstEdges().size());
+    }
+
+    @Test
+    public void testMSTNoCycles() {
+        Graph graph = new Graph();
+        graph.addEdge("A", "B", 1);
+        graph.addEdge("B", "C", 2);
+        graph.addEdge("C", "A", 3); // Создает цикл
+
+        PrimMST prim = new PrimMST();
+        MSTResult result = prim.findMST(graph);
+
+   
+        assertEquals(2, result.getMstEdges().size());
+        assertEquals(3, result.getTotalCost()); // A-B(1) + B-C(2)
+    }
+
+    @Test
+    public void testDisconnectedGraph() {
+        Graph graph = new Graph();
+        graph.addEdge("A", "B", 1);
+        graph.addEdge("C", "D", 2); // Две отдельные компоненты
+
+        PrimMST prim = new PrimMST();
+        MSTResult result = prim.findMST(graph);
+
+
+        assertEquals(1, result.getMstEdges().size());
+        assertEquals(1, result.getTotalCost());
+
+       
+        Edge mstEdge = result.getMstEdges().get(0);
+        assertTrue(
+                (mstEdge.getFrom().equals("A") && mstEdge.getTo().equals("B")) ||
+                        (mstEdge.getFrom().equals("B") && mstEdge.getTo().equals("A"))
+        );
+        assertEquals(1, mstEdge.getWeight());
+    }
+
+    @Test
+    public void testKruskalDisconnectedGraph() {
+        Graph graph = new Graph();
+        graph.addEdge("A", "B", 1);
+        graph.addEdge("C", "D", 2); 
+
+        KruskalMST kruskal = new KruskalMST();
+        MSTResult result = kruskal.findMST(graph);
+
+  
+        assertEquals(2, result.getMstEdges().size());
+        assertEquals(3, result.getTotalCost()); // 1 + 2 = 3
+    }
+
+    @Test
+    public void testEdgeComparison() {
+        Edge edge1 = new Edge("A", "B", 5);
+        Edge edge2 = new Edge("C", "D", 3);
+        Edge edge3 = new Edge("E", "F", 5);
+
+        assertTrue(edge2.compareTo(edge1) < 0); // 3 < 5
+        assertTrue(edge1.compareTo(edge2) > 0); // 5 > 3
+        assertEquals(0, edge1.compareTo(edge3)); // 5 == 5
+    }
+
+    @Test
+    public void testUnionFind() {
+        Set<String> vertices = new HashSet<>(Arrays.asList("A", "B", "C", "D"));
+        UnionFind uf = new UnionFind(vertices);
+
+        assertTrue(uf.union("A", "B"));
+        assertTrue(uf.union("C", "D"));
+        assertFalse(uf.union("A", "B")); // Уже соединены
+
+        assertEquals(uf.find("A"), uf.find("B"));
+        assertEquals(uf.find("C"), uf.find("D"));
+        assertNotEquals(uf.find("A"), uf.find("C"));
+
+        assertTrue(uf.union("B", "C"));
+        assertEquals(uf.find("A"), uf.find("D")); // Все соединены
+    }
+}
