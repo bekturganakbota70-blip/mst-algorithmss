@@ -1,0 +1,80 @@
+package ass3;
+
+import java.util.*;
+
+public class PrimMST {
+    private int operationsCount;
+
+    public PrimMST() {
+        this.operationsCount = 0;
+    }
+
+    public MSTResult findMST(Graph graph) {
+        long startTime = System.nanoTime();
+        operationsCount = 0;
+
+        if (graph.getVertexCount() == 0) {
+            return new MSTResult(new ArrayList<>(), 0, operationsCount, 0);
+        }
+
+        Set<String> visited = new HashSet<>();
+        List<Edge> mstEdges = new ArrayList<>();
+        int totalCost = 0;
+
+        
+        for (String vertex : graph.getVertices()) {
+            if (!visited.contains(vertex)) {
+             
+                List<Edge> componentMST = findComponentMST(graph, vertex, visited);
+                mstEdges.addAll(componentMST);
+                totalCost += componentMST.stream().mapToInt(Edge::getWeight).sum();
+            }
+        }
+
+        long endTime = System.nanoTime();
+        double executionTimeMs = (endTime - startTime) / 1_000_000.0;
+
+        return new MSTResult(mstEdges, totalCost, operationsCount, executionTimeMs);
+    }
+
+    private List<Edge> findComponentMST(Graph graph, String startVertex, Set<String> visited) {
+        List<Edge> componentEdges = new ArrayList<>();
+        PriorityQueue<Edge> pq = new PriorityQueue<>();
+
+        visited.add(startVertex);
+        operationsCount++;
+
+      
+        pq.addAll(graph.getAdjacentEdges(startVertex));
+        operationsCount += graph.getAdjacentEdges(startVertex).size();
+
+        while (!pq.isEmpty() && componentEdges.size() < graph.getVertexCount() - 1) {
+            Edge edge = pq.poll();
+            operationsCount++;
+
+            String nextVertex = null;
+            if (visited.contains(edge.getFrom()) && !visited.contains(edge.getTo())) {
+                nextVertex = edge.getTo();
+            } else if (visited.contains(edge.getTo()) && !visited.contains(edge.getFrom())) {
+                nextVertex = edge.getFrom();
+            }
+
+            if (nextVertex != null) {
+                visited.add(nextVertex);
+                componentEdges.add(edge);
+                operationsCount += 2;
+
+       
+                for (Edge adjEdge : graph.getAdjacentEdges(nextVertex)) {
+                    operationsCount++;
+                    String otherVertex = adjEdge.getOther(nextVertex);
+                    if (!visited.contains(otherVertex)) {
+                        pq.add(adjEdge);
+                        operationsCount++;
+                    }
+                }
+            }
+        }
+
+        return componentEdges;
+    }
