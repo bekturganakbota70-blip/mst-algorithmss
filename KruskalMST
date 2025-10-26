@@ -1,0 +1,45 @@
+package ass3;
+
+import java.util.*;
+
+public class KruskalMST {
+    private int operationsCount;
+
+    public KruskalMST() {
+        this.operationsCount = 0;
+    }
+
+    public MSTResult findMST(Graph graph) {
+        long startTime = System.nanoTime();
+        operationsCount = 0;
+
+        List<Edge> mstEdges = new ArrayList<>();
+        int totalCost = 0;
+
+      
+        List<Edge> sortedEdges = graph.getSortedEdges();
+        operationsCount += sortedEdges.size(); 
+
+        UnionFind uf = new UnionFind(graph.getVertices());
+        operationsCount += graph.getVertexCount();
+
+        for (Edge edge : sortedEdges) {
+            operationsCount++;
+            if (mstEdges.size() == graph.getVertexCount() - 1) {
+                break;
+            }
+
+            if (uf.union(edge.getFrom(), edge.getTo())) {
+                mstEdges.add(edge);
+                totalCost += edge.getWeight();
+                operationsCount += 2;
+            }
+            operationsCount++; 
+        }
+
+        long endTime = System.nanoTime();
+        double executionTimeMs = (endTime - startTime) / 1_000_000.0;
+
+        return new MSTResult(mstEdges, totalCost, operationsCount, executionTimeMs);
+    }
+}
