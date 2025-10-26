@@ -1,0 +1,102 @@
+package ass3;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class MSTApplication {
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    public static void main(String[] args) {
+        try {
+            File inputFile = new File("input.json");
+
+      
+            if (!inputFile.exists()) {
+                inputFile = new File("src/main/resources/input.json");
+            }
+            if (!inputFile.exists()) {
+                System.err.println("Файл input.json не найден! Создай его в корне проекта.");
+                System.err.println("Текущая директория: " + new File(".").getAbsolutePath());
+                return;
+            }
+
+            System.out.println("Чтение файла: " + inputFile.getAbsolutePath());
+
+            Map<String, Object> inputData = mapper.readValue(
+                    inputFile,
+                    new TypeReference<Map<String, Object>>() {}
+            );
+
+            List<Map<String, Object>> graphsData = (List<Map<String, Object>>) inputData.get("graphs");
+            List<Map<String, Object>> results = new ArrayList<>();
+
+            PrimMST prim = new PrimMST();
+            KruskalMST kruskal = new KruskalMST();
+
+            for (Map<String, Object> graphData : graphsData) {
+                int graphId = ((Number) graphData.get("id")).intValue();
+                List<String> nodes = (List<String>) graphData.get("nodes");
+                List<Map<String, Object>> edgesData = (List<Map<String, Object>>) graphData.get("edges");
+
+                
+                Graph graph = Graph.fromJsonData(nodes, edgesData);
+
+              
+                MSTResult primResult = prim.findMST(graph);
+                MSTResult kruskalResult = kruskal.findMST(graph);
+
+      
+                Map<String, Object> result = new HashMap<>();
+                result.put("graph_id", graphId);
+
+                Map<String, Object> inputStats = new HashMap<>();
+                inputStats.put("vertices", graph.getVertexCount());
+                inputStats.put("edges", graph.getEdgeCount());
+                result.put("input_stats", inputStats);
+
+                result.put("prim", createAlgorithmResult(primResult));
+                result.put("kruskal", createAlgorithmResult(kruskalResult));
+
+                results.add(result);
+            }
+
+   
+            Map<String, Object> output = new HashMap<>();
+            output.put("results", results);
+
+            File outputFile = new File("output.json");
+            mapper.writerWithDefaultPrettyPrinter().writeValue(outputFile, output);
+
+            System.out.println("✅ Результаты сохранены в: " + outputFile.getAbsolutePath());
+            System.out.println("✅ Обработано графов: " + results.size());
+
+        } catch (Exception e) {
+            System.err.println("❌ Ошибка: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static Map<String, Object> createAlgorithmResult(MSTResult result) {
+        Map<String, Object> algoResult = new HashMap<>();
+
+        List<Map<String, Object>> edgesList = result.getMstEdges().stream()
+                .map(edge -> {
+                    Map<String, Object> edgeMap = new HashMap<>();
+                    edgeMap.put("from", edge.getFrom());
+                    edgeMap.put("to", edge.getTo());
+                    edgeMap.put("weight", edge.getWeight());
+                    return edgeMap;
+                })
+                .collect(Collectors.toList());
+
+        algoResult.put("mst_edges", edgesList);
+        algoResult.put("total_cost", result.getTotalCost());
+        algoResult.put("operations_count", result.getOperationsCount());
+        algoResult.put("execution_time_ms", result.getExecutionTimeMs());
+
+        return algoResult;
+    }
+}
